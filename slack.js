@@ -74,14 +74,14 @@ function getSlackUserName(parsedBody, success)
 
 function getSlackText(parsedBody, success)
 {
-    if (!success) { 
-        return 'Buildy boi failed, go fish!'
+    if (!success) {
+        return 'Buildy boi failed, go fish!';
     }
 
     return (
         'Initiated by ' + (parsedBody.author || 'unknown user') + ' on ' + (parsedBody.endTime || 'unknown date and time') +
         '\r\n' +
-        (siteName ? '<http://' + parsedBody.siteName '.azurewebsites.net|Browse site>' : '') +
+        (siteName ? '<http://' + parsedBody.siteName + '.azurewebsites.net|Browse site>' : '') +
         '\r\n' +
         '```' +
         (parsedBody.message || 'null message') +
