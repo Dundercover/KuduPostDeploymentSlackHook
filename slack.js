@@ -42,10 +42,7 @@ function convertToSlackMessage(body, channel)
     var parsedBody  = trParseBody(body);
     var success     = (parsedBody.status=='success' && parsedBody.complete);
     return JSON.stringify({
-        username:   getSlackUserName(parsedBody, success),
-        icon_emoji: success ? ':shipit:' : ':warning:',
-        text:       getSlackText(parsedBody),
-        channel:    channel || process.env.slackchannel
+        text: getSlackText(parsedBody, success)
     });
 }
 
@@ -75,18 +72,17 @@ function getSlackUserName(parsedBody, success)
     );
 }
 
-function getSlackText(parsedBody)
+function getSlackText(parsedBody, success)
 {
-    var hostName = parsedBody.hostName
-    var id = parsedBody.id
+    if (!success) { 
+        return 'Buildy boi failed, go fish!'
+    }
+
     return (
-        'Initiated by: ' +
-        (parsedBody.author || 'unknown') +
-        ' ' +
-        (parsedBody.endTime || '') +
+        'Initiated by ' + (parsedBody.author || 'unknown user') + ' on ' + (parsedBody.endTime || 'unknown date and time') +
         '\r\n' +
-        (hostName ? '<https://' + hostName + '|' + hostName + '> ' : '') +
-        (id ? 'Id: ' + parsedBody.id + '\r\n' : '') +
+        (siteName ? '<http://' + parsedBody.siteName '.azurewebsites.net|Browse site'>' : '') +
+        '\r\n' +
         '```' +
         (parsedBody.message || 'null message') +
         '```'
