@@ -40,7 +40,8 @@ function sendToSlack(parsedRequest, callback)
 function convertToSlackMessage(body, channel)
 {
     var parsedBody  = trParseBody(body);
-    var success     = (parsedBody.status=='success' && parsedBody.complete);
+    var success     = (parsedBody.status==='success' && parsedBody.complete);
+    
     return JSON.stringify({
         text: getSlackText(parsedBody, success)
     });
@@ -79,12 +80,14 @@ function getSlackText(parsedBody, success)
     }
 
     return (
-        'Initiated by ' + (parsedBody.author || 'unknown user') + ' on ' + (parsedBody.endTime || 'unknown date and time') +
+        (parsedBody.siteName ? '<http://' + parsedBody.siteName + '.azurewebsites.net|Browse site>' : '') +
         '\r\n' +
-        (siteName ? '<http://' + parsedBody.siteName + '.azurewebsites.net|Browse site>' : '') +
+        'Automatically deployed on ' + (parsedBody.endTime || 'unknown date and time') +
+        '\r\n' +
+        'Latest commit by ' + (parsedBody.author || 'unknown user') + ' with the following message: ' +
         '\r\n' +
         '```' +
-        (parsedBody.message || 'null message') +
+        (parsedBody.message || 'Empty message') +
         '```'
     );
 }
