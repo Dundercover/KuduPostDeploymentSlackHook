@@ -78,9 +78,9 @@ function getSlackText(parsedBody, success)
     if (!success) {
         return 'Buildy boi failed, go fish!';
     }
-
+	
     return (
-        (parsedBody.siteName ? '<http://' + parsedBody.siteName + '.azurewebsites.net|Browse site>' : '') +
+        '<' + process.env.siteuri + '|Browse site>' +
         '\r\n' +
         'Automatically deployed on ' + (parsedBody.endTime || 'unknown date and time') +
         '\r\n' +
