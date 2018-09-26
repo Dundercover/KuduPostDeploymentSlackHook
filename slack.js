@@ -36,7 +36,7 @@ function sendToSlack(parsedRequest, callback)
     var parsedBody = trParseBody(parsedRequest.body);
     var success = (parsedBody.status==='success' && parsedBody.complete);
 
-    var slackMessage = convertToSlackMessage(parsedRequest.body, success);
+    var slackMessage = createSlackMessage(parsedBody, success);
 
     var req = https.request(getSlackHookRequestOptions(parsedBody));
     var reqError = false;
@@ -52,7 +52,7 @@ function sendToSlack(parsedRequest, callback)
     req.end();
 }
 
-function convertToSlackMessage(parsedBody, success)
+function createSlackMessage(parsedBody, success)
 {
     return JSON.stringify({
         text: getSlackText(parsedBody, success)
