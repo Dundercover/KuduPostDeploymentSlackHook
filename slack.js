@@ -1,15 +1,26 @@
-var https                   = require('https');
-var url                     = require('url');
-var slackHookRequestOptions = getSlackHookRequestOptions();
+var https = require('https');
+var url = require('url');
 module.exports.sendToSlack  = sendToSlack;
 
-function getSlackHookRequestOptions()
+function getSiteUri(parsedBody)
 {
-    var hookUri     =   url.parse(process.env.slackhookuri);
+    return process.env[parsedBody.siteName + '_siteuri'];
+}
+
+function getSlackhookUri(parsedBody)
+{
+    return process.env[parsedBody.siteName + '_slackhookuri'];
+}
+
+function getSlackHookRequestOptions(parsedBody)
+{
+    var slackhookUri = getSlackhookUri(parsedBody);
+    var parsedUri = url.parse(slackhookUri);
+
     return {
-        host:       hookUri.hostname,
-        port:       hookUri.port,
-        path:       hookUri.path,
+        host:       parsedUri.hostname,
+        port:       parsedUri.port,
+        path:       parsedUri.path,
         method:     'POST',
         headers:    { 'Content-Type': 'application/json' }
     };
@@ -17,31 +28,32 @@ function getSlackHookRequestOptions()
 
 function sendToSlack(parsedRequest, callback)
 {
-        if (!parsedRequest || (parsedRequest.body||'').trim()=='') {
-            callback(true);
-            return;
-        }
+    if (!parsedRequest || (parsedRequest.body||'').trim()=='') {
+        callback(true);
+        return;
+    }
 
-        var error           = false;
-        var slackMessage    = convertToSlackMessage(parsedRequest.body, parsedRequest.channel);
-        var req             = https.request(slackHookRequestOptions);
+    var parsedBody = trParseBody(parsedRequest.body);
+    var success = (parsedBody.status==='success' && parsedBody.complete);
 
-        req.on('error', function(e) {
-            console.error(e);
-            error = true;
-        });
+    var slackMessage = convertToSlackMessage(parsedRequest.body, success);
 
-        req.on('close', function() { callback(error); } );
+    var req = https.request(getSlackHookRequestOptions(parsedBody));
+    var reqError = false;
 
-        req.write(slackMessage);
-        req.end();
+    req.on('error', function(e) {
+        console.error(e);
+        reqError = true;
+    });
+
+    req.on('close', function() { callback(reqError); } );
+
+    req.write(slackMessage);
+    req.end();
 }
 
-function convertToSlackMessage(body, channel)
+function convertToSlackMessage(parsedBody, success)
 {
-    var parsedBody  = trParseBody(body);
-    var success     = (parsedBody.status==='success' && parsedBody.complete);
-    
     return JSON.stringify({
         text: getSlackText(parsedBody, success)
     });
@@ -64,23 +76,16 @@ function trParseBody(body)
     }
 }
 
-function getSlackUserName(parsedBody, success)
-{
-    return (
-        (success ? 'Published:': 'Failed:') +
-        ' ' +
-        (parsedBody.siteName || 'unknown')
-    );
-}
-
 function getSlackText(parsedBody, success)
 {
     if (!success) {
         return 'Buildy boi failed, go fish!';
     }
-	
+    
+    var siteUri = getSiteUri(parsedBody);
+
     return (
-        '<' + process.env.siteuri + '|Browse site>' +
+        '<' + siteUri + '|Browse site>' +
         '\r\n' +
         'Automatically deployed on ' + (parsedBody.endTime || 'unknown date and time') +
         '\r\n' +
